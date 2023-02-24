@@ -1,86 +1,98 @@
 ﻿#include <iostream>
-#include <fstream>
-#include <windows.h>
 #include <string>
-
-using namespace std;
+#include <fstream>
+#include <Windows.h>
 
 class address {
 public:
-    // Конструктор
-    address(string city, string street, int building, int flat);
-    address();
+    address(std::string, std::string, int, int) { }
+    address() {}
 
-    // Методы
-    string fullAddr();
-    void sort(std::string* stringArr, int size);
-private:
-    string city;
-    string street;
-    int building;
-    int flat;
-};
-
-address::address(string city, string street, int building, int flat) {
-    this->city = city;
-    this->street = street;
-    this->building = building;
-    this->flat = flat;
-}
-
-string address::fullAddr() {
-    string addr = city + ", " + street + ", " + to_string(building) + ", " + to_string(flat);
-    return addr;
-}
-void sort(std::string* addrString, int size) {
-    for (int i = 0; i < size; ++i) {
-        for (int j = i + 1; j < size; ++j) {
-            if (addrString[i] > addrString[j]) {
-                std::string tempStorage = addrString[i];
-                addrString[i] = addrString[j];
-                addrString[j] = tempStorage;
-            }
-        }
+    std::string get_output_address() {
+        std::string a = std::to_string(house);
+        std::string b = std::to_string(apartment);
+        std::string out_add = (city + ", " + street + ", " + a + ", " + b);
+        return out_add;
     }
-}
+    void set_all(std::string ci, std::string st, int hou, int apart) {
+        city = ci;
+        street = st;
+        house = hou;
+        apartment = apart;
+    }
+
+    std::string get_city() {
+        return city;
+    }
+
+private:
+    std::string city = { 0 }, street = { 0 };
+    int house = 0; int apartment = 0;
+};
 
 int main()
 {
+    setlocale(LC_ALL, "RUS");
     SetConsoleCP(1251);
-    SetConsoleOutputCP(1251);
 
-    setlocale(LC_ALL, "Russian");
+    std::ifstream fin;
+    fin.open("in.txt");
+    if (!fin.is_open()) {
+        std::cout << "Error: файл не открыт " << "in.txt" << '\n';
+        return -1;
+    }
 
-    string cityName, streetName;
-    int size, buildingNum, flatNum;
-    ifstream in("in.txt");
+    int size = 0;
+    fin >> size;
+    if (size <= 0) {
+        std::cout << "Ошибка: недопустимый размер  " << size << '\n';
+        return -2;
+    }
 
-    in >> size;
+    address* add = new address[size];
+    std::string cityName;
+    std::string streetName;
+    int buildingNum;
+    int flatNum;
 
-    string* addrString = new string[size];
+    for (int i = 0; i < size; ++i)
+    {
 
-    if (in.is_open()) {
-        for (int i = 0; i < size; i++) {
-            in >> cityName >> streetName >> buildingNum >> flatNum;
+        fin >> cityName >> streetName >> buildingNum >> flatNum;
 
-            address addr(cityName, streetName, buildingNum, flatNum);
+        add[i].set_all(cityName, streetName, buildingNum, flatNum);
 
-            addrString[i] = addr.fullAddr();
+    }
+    fin.close();
+
+    address temp;
+
+    for (int i = 0; i < size - 1; i++) {
+        for (int j = 0; j < size - i - 1; j++) {
+            if (add[j].get_city() > add[j + 1].get_city()) {
+                temp = add[j];
+                add[j] = add[j + 1];
+                add[j + 1] = temp;
+            }
         }
     }
-    else {
-        cout << "Не удалось открыть файл!" << endl;
+
+    std::ofstream fout;
+    fout.open("out.txt");
+    if (!fout.is_open())
+    {
+        std::cout << "Error: unable to open file " << "out.txt" << " for writing" << '\n';
+        return -3;
     }
-    in.close();
+    fout << size << std::endl;
 
-    sort(addrString, size);
+    for (int i = 0; i < size; ++i)
+    {
+        fout << add[i].get_output_address() << std::endl;
 
-    ofstream out("out.txt");
-    out << size << endl;
-    for (int i = 0; i < size; i++) {
-        out << addrString[i] << endl;
     }
-    out.close();
 
-    delete[] addrString;
+    fout.close();
+    delete[] add;
+
 }
